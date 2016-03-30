@@ -12,6 +12,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <netdb.h>
+#include <iostream>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,10 +32,28 @@
 
 
 int define_socket_TCP(int port) {
-   // Include the code for defining the socket.
-  
-  
-   return -1;
+    struct sockaddr_in sin;
+   
+    int s, type;
+    
+    s = socket(AF_INET,SOCK_STREAM, 0);
+    if(s < 0) {
+                errexit("No puedo crear el socket: %s :(\n", strerror(errno));
+    }
+    
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_port = htons(port); 
+    
+    if(bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+            errexit("No puedo hacer el bind con el puerto: %s:(\n", strerror(errno));
+    }
+    
+    if (listen(s, 5) < 0)
+            errexit("Fallo en el listen: %s:(\n", strerror(errno));
+    
+    return s;
 }
 
 // This function is executed when the thread is executed.
