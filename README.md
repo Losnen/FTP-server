@@ -1,12 +1,6 @@
-
-
-
-                     REDES Y SISTEMAS DISTRIBUIDOS
-
-
-==========================================================================
-Code template for the socket programming assignment: Simple FTP server
-==========================================================================
+#REDES Y SISTEMAS DISTRIBUIDOS 15-16
+##Samuel Ramos Barroso, Carlos de Armas Hernández y Darwin González Suárez
+###Simple FTP Server
 
 This folder contains the code template for a simple FTP as proposed 
 in the assignment that is attached.
