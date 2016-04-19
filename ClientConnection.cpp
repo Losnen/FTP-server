@@ -143,7 +143,9 @@ void ClientConnection::WaitForRequests() {
           fprintf(fd, "332 Need account for login.\n");
       }
       else if (COMMAND("PWD")) {
-
+        char aux[200];
+        getcwd(aux,sizeof(aux)); //La funcion getcwd esta en la librería unistd.h
+        fprintf(fd, "257 'PATHNAME' created  %s\n",aux);
       }
       else if (COMMAND("PASS")) {
         fscanf(fd, "%s", arg);
@@ -160,30 +162,36 @@ void ClientConnection::WaitForRequests() {
 
       }
       else if (COMMAND("CWD")) {
-
+        char aux[200];
+        getcwd(aux,sizeof(aux));
+        if(chdir(aux) == 0)
+			     fprintf(fd, "200 Working directory changed\n");
+		    else
+			     fprintf(fd, "431 No such directory\n");
       }
       else if (COMMAND("STOR") ) {
 
       }
       else if (COMMAND("SYST")) {
-
+        fprintf(fd, "215 UNIX Type: L8.\n");
       }
       else if (COMMAND("TYPE")) {
-
+        fprintf(fd, "200 TYPE OK\n");
       }
       else if (COMMAND("RETR")) {
 
       }
       else if (COMMAND("QUIT")) {
-
+        parar = true;
+	      fprintf(fd, "221 Service closing control connection\n");
       }
       else if (COMMAND("LIST")) {
 
       }
       else  {
-	    fprintf(fd, "502 Command not implemented.\n"); fflush(fd);
-	    printf("Comando : %s %s\n", command, arg);
-	    printf("Error interno del servidor\n");
+	      fprintf(fd, "502 Command not implemented.\n"); fflush(fd);
+	      printf("Comando : %s %s\n", command, arg);
+	      printf("Error interno del servidor\n");
 
       }
 
