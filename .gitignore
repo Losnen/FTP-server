@@ -26,3 +26,6 @@
 *.exe
 *.out
 *.app
+
+ftp_server.dSYM
+ftp_server
