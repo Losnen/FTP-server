@@ -157,11 +157,11 @@ void ClientConnection::WaitForRequests() {
       }
       else if (COMMAND("PORT")) {
         int ip[4];
-        int port[2];
-        fscanf(fd, "%d,%d,%d,%d,%d,%d", &ip[0], &ip[1], &ip[2], &ip[3], &port[0], &port[1]);
+        int puertos[2];
+        fscanf(fd, "%d,%d,%d,%d,%d,%d", &ip[0], &ip[1], &ip[2], &ip[3], &puertos[0], &puertos[1]);
 
         uint32_t ip_addr = ip[3]<<24 | ip[2]<<16 | ip[1]<<8 | ip[0];
-        uint16_t port_v = port[0] << 8 | port[1];
+        uint16_t port_v = puertos[0] << 8 | puertos[1];
 
         data_socket = connect_TCP(ip_addr,port_v);
 
@@ -188,14 +188,53 @@ void ClientConnection::WaitForRequests() {
         fprintf(fd, "200 TYPE OK\n");
       }
       else if (COMMAND("RETR")) {
+        fscanf(fd, "%s", arg);
+        FILE* file = fopen(arg,"rb");
+        if (!file){
+          fprintf(fd, "450 Requested file action not taken. File unavaible.\n");
+          close(data_socket);
+        }
+        else{
+          fprintf(fd, "150 File status okay; about to open data connection.\n");
+          struct sockaddr_in sa;
+          socklen_t sa_len = sizeof(sa);
+          char buffer[MAX_BUFF];
+          int aux;
+          do{
+            aux = fread(buffer, sizeof(char), MAX_BUFF, file);
+            send(data_socket, buffer, aux, 0);
+          }while(aux == MAX_BUFF);
 
+          fprintf(fd,"226 Closing data connection. Requested file action successful.\n");
+          fclose(file);
+          close(data_socket);
+        }
       }
       else if (COMMAND("QUIT")) {
         parar = true;
 	      fprintf(fd, "221 Service closing control connection\n");
       }
       else if (COMMAND("LIST")) {
+        fprintf(fd, "125 Data Transfer starting\n");
+        struct sockaddr_in sa;
+        socklen_t sa_len = sizeof(sa);
+        char buffer[MAX_BUFF];
+        std::string listado;
+        std::string ls = "ls";
+        FILE* file = popen(ls.c_str(), "r");
+        if (!file){
+          fprintf(fd, "450 File unavaible.\n");
+          close(data_socket);
+        }else{
+          while (!feof(file))
+            if (fgets(buffer, MAX_BUFF, file) != NULL)
+              listado.append(buffer);
 
+              send(data_socket, listado.c_str(), listado.size(), 0);
+              fprintf(fd, "250 Requested file action successful.\n");
+              pclose(file);
+              close(data_socket);
+        }
       }
       else  {
 	      fprintf(fd, "502 Command not implemented.\n"); fflush(fd);
