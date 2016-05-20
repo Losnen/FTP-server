@@ -214,29 +214,28 @@ void ClientConnection::WaitForRequests() {
       }
       else if (COMMAND("STOR") ) {
         fscanf(fd, "%s", arg);
-        FILE *file = fopen(arg,"w+");
+        char buffer[MAX_BUFF];
+        int file;
+        int aux;
 
-        if (!file)
+        file=open(arg, O_RDWR|O_CREAT,S_IRWXU);
+        fprintf(fd, "150 File ok, creating connection\n");
+        fflush(fd);
+        if(file < 0)
         {
           fprintf(fd, "450 Requested file action not taken. File unavaible.\n");
-          close(data_socket);
         }
         else
         {
-          fprintf(fd, "150 File ok, creating connection\n"); fflush(fd);
-          char buffer[MAX_BUFF];
-          int datos;
-          while(datos == MAX_BUFF)
-          {
-          	datos = recv(data_socket,buffer,MAX_BUFF,0);
-          	fwrite(buffer,1,datos,file);
-          }
+          do{
+            aux = read(data_socket,buffer,sizeof(buffer));
+            write(file,buffer,aux);
+          }while(aux > 0);
+
           fprintf(fd,"250 Requested file action okay, completed.\n");
-          fflush(fd);
-          fclose(file);
+          close(file);
           close(data_socket);
         }
-
       }
       else if (COMMAND("SYST")) {
         fprintf(fd, "215 UNIX Type: L8.\n");
@@ -258,7 +257,6 @@ void ClientConnection::WaitForRequests() {
           char buffer[MAX_BUFF];
           int aux;
           do{
-            std::cout << "hola" << std::endl;
             aux = fread(buffer, sizeof(char), MAX_BUFF, file);
             send(data_socket, buffer, aux, 0);
           }while(aux == MAX_BUFF);
