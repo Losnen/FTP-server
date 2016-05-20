@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cerrno>
 #include <netdb.h>
+#include <iostream>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -192,25 +193,16 @@ void ClientConnection::WaitForRequests() {
         fprintf(fd, "200 Okey\n");
       }
       else if (COMMAND("PASV")) {
-        fscanf(fd, "%s", arg);
-        struct sockaddr_in sin;
-        socklen_t len = sizeof(sin);
-        uint16_t  port = sin.sin_port;
-        uint32_t ip = sin.sin_addr.s_addr;
-        int s = define_socket_TCP2(0);
-        getsockname(s, (struct sockaddr*)&sin, &len);
-        printf("%d",s);
-        int p1 = port >> 8;
-        int p2 = port & 0xFF;
+        struct sockaddr_in fsin;
+      	socklen_t len = sizeof(fsin);
+      	uint16_t s = define_socket_TCP2(0);
+      	uint16_t port = fsin.sin_port;
 
-        int a1 = ip >> 24;
-        int a2 = (ip >> 16) & 0xFF;
-        int a3 = (ip >> 6) & 0xFF;
-        int a4 = (ip & 0xFF);
-
-        fprintf(fd,"227 entering passive mode %d,%d,%d,%d,%d,%d",a1,a2,a3,a4,p1,p2);
+        getsockname(s, (struct sockaddr *) &fsin, &len);
+      	fprintf(fd, "227 entering passive mode (127,0,0,1,%d,%d)\n", port>>8 , port & 0xFF);
         fflush(fd);
-        data_socket = accept(s,(struct sockaddr*)&sin,&len);
+
+        data_socket = accept(s, (struct sockaddr *) &fsin, &len);
       }
       else if (COMMAND("CWD")) {
         char aux[200];
@@ -222,7 +214,7 @@ void ClientConnection::WaitForRequests() {
       }
       else if (COMMAND("STOR") ) {
         fscanf(fd, "%s", arg);
-        FILE *file = fopen(arg,"wb");
+        FILE *file = fopen(arg,"w+");
 
         if (!file)
         {
@@ -233,7 +225,7 @@ void ClientConnection::WaitForRequests() {
         {
           fprintf(fd, "150 File ok, creating connection\n"); fflush(fd);
           char buffer[MAX_BUFF];
-          int datos = 0;
+          int datos;
           while(datos == MAX_BUFF)
           {
           	datos = recv(data_socket,buffer,MAX_BUFF,0);
@@ -266,6 +258,7 @@ void ClientConnection::WaitForRequests() {
           char buffer[MAX_BUFF];
           int aux;
           do{
+            std::cout << "hola" << std::endl;
             aux = fread(buffer, sizeof(char), MAX_BUFF, file);
             send(data_socket, buffer, aux, 0);
           }while(aux == MAX_BUFF);
