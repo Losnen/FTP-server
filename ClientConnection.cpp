@@ -36,6 +36,30 @@
 #include "ClientConnection.h"
 
 
+int define_socket_TCP2(int port) {
+    struct sockaddr_in sin;
+
+    int s, type;
+
+    s = socket(AF_INET,SOCK_STREAM, 0);
+    if(s < 0) {
+                errexit("No puedo crear el socket: %s :(\n", strerror(errno));
+    }
+
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_port = htons(port);
+
+    if(bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+            errexit("No puedo hacer el bind con el puerto: %s:(\n", strerror(errno));
+    }
+
+    if (listen(s, 5) < 0)
+            errexit("Fallo en el listen: %s:(\n", strerror(errno));
+
+    return s;
+}
 
 
 ClientConnection::ClientConnection(int s) {
@@ -168,7 +192,25 @@ void ClientConnection::WaitForRequests() {
         fprintf(fd, "200 Okey\n");
       }
       else if (COMMAND("PASV")) {
+        fscanf(fd, "%s", arg);
+        struct sockaddr_in sin;
+        socklen_t len = sizeof(sin);
+        uint16_t  port = sin.sin_port;
+        uint32_t ip = sin.sin_addr.s_addr;
+        int s = define_socket_TCP2(0);
+        getsockname(s, (struct sockaddr*)&sin, &len);
+        printf("%d",s);
+        int p1 = port >> 8;
+        int p2 = port & 0xFF;
 
+        int a1 = ip >> 24;
+        int a2 = (ip >> 16) & 0xFF;
+        int a3 = (ip >> 6) & 0xFF;
+        int a4 = (ip & 0xFF);
+
+        fprintf(fd,"227 entering passive mode %d,%d,%d,%d,%d,%d",a1,a2,a3,a4,p1,p2);
+        fflush(fd);
+        data_socket = accept(s,(struct sockaddr*)&sin,&len);
       }
       else if (COMMAND("CWD")) {
         char aux[200];
@@ -179,6 +221,29 @@ void ClientConnection::WaitForRequests() {
 			     fprintf(fd, "431 No such directory\n");
       }
       else if (COMMAND("STOR") ) {
+        fscanf(fd, "%s", arg);
+        FILE *file = fopen(arg,"wb");
+
+        if (!file)
+        {
+          fprintf(fd, "450 Requested file action not taken. File unavaible.\n");
+          close(data_socket);
+        }
+        else
+        {
+          fprintf(fd, "150 File ok, creating connection\n"); fflush(fd);
+          char buffer[MAX_BUFF];
+          int datos = 0;
+          while(datos == MAX_BUFF)
+          {
+          	datos = recv(data_socket,buffer,MAX_BUFF,0);
+          	fwrite(buffer,1,datos,file);
+          }
+          fprintf(fd,"250 Requested file action okay, completed.\n");
+          fflush(fd);
+          fclose(file);
+          close(data_socket);
+        }
 
       }
       else if (COMMAND("SYST")) {
