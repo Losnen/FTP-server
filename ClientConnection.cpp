@@ -193,16 +193,29 @@ void ClientConnection::WaitForRequests() {
         fprintf(fd, "200 Okey\n");
       }
       else if (COMMAND("PASV")) {
+        /*
         struct sockaddr_in fsin;
+        std::cout <<  "fsin.port: " << fsin.sin_port << std::endl;
       	socklen_t len = sizeof(fsin);
-      	uint16_t s = define_socket_TCP2(0);
+      	int s = socket(AF_INET, SOCK_STREAM, 0);
       	uint16_t port = fsin.sin_port;
-
+        //memset(&fsin, 0, sizeof(fsin));
+        std::cout << "s: " << s << " port: " << port << std::endl;
         getsockname(s, (struct sockaddr *) &fsin, &len);
       	fprintf(fd, "227 entering passive mode (127,0,0,1,%d,%d)\n", port>>8 , port & 0xFF);
         fflush(fd);
-
-        data_socket = accept(s, (struct sockaddr *) &fsin, &len);
+        */
+        struct sockaddr_in sin;
+        socklen_t len = sizeof(sin);
+        int s = define_socket_TCP2(0);
+        getsockname(s, (struct sockaddr *) &sin, &len);
+        uint16_t puerto = sin.sin_port;
+        int p1 = puerto & 0xFF;
+        int p2 = puerto >> 8;
+        fprintf(fd, "227 entering passive mode (127,0,0,1,%d,%d)\n", p1, p2);
+        fflush(fd);
+        len = sizeof(sin);
+        data_socket = accept(s, (struct sockaddr*) &sin, &len);
       }
       else if (COMMAND("CWD")) {
         char aux[200];
@@ -271,6 +284,7 @@ void ClientConnection::WaitForRequests() {
 	      fprintf(fd, "221 Service closing control connection\n");
       }
       else if (COMMAND("LIST")) {
+        std::cout << "hago el ls" << std::endl;
         fprintf(fd, "125 Data Transfer starting\n");
         struct sockaddr_in sa;
         socklen_t sa_len = sizeof(sa);
