@@ -1,14 +1,18 @@
 #REDES Y SISTEMAS DISTRIBUIDOS 15-16
-##Samuel Ramos Barroso, Carlos de Armas Hernández y Darwin González Suárez
-###Simple FTP Server
+##FTP Server
 
-This folder contains the code template for a simple FTP as proposed
-in the assignment that is attached.
+En una terminal ejecuta el servidor:
+```
+ make clean
+ make
+ ./ftp_server
+```
 
-Before compiling make sure that you have the following packages installed
-on your system:
-- gcc
-- g++
-- make
-
-To compile the code use make command.
+En una terminal aparte ejecuta el cliente:
+```
+ftp -d
+```
+Una vez dentro de la interfaz ejecuta:
+```
+open localhost 2121
+```
