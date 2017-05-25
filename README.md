@@ -1,5 +1,5 @@
-#REDES Y SISTEMAS DISTRIBUIDOS 15-16
-##FTP Server
+# REDES Y SISTEMAS DISTRIBUIDOS 15-16
+## FTP Server
 
 En una terminal ejecuta el servidor:
 ```
